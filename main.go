@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/Sirupsen/logrus"
 	sparta "github.com/mweagle/Sparta"
@@ -34,9 +35,12 @@ func main() {
 
 	var lambdaFunctions []*sparta.LambdaAWSInfo
 	lambdaFunctions = append(lambdaFunctions, lambdaFn)
-	sparta.Main("SpartaHelloWorld",
+	err := sparta.Main("SpartaHelloWorld",
 		fmt.Sprintf("Test HelloWorld resource command"),
 		lambdaFunctions,
 		nil,
 		nil)
+	if err != nil {
+		os.Exit(1)
+	}
 }
