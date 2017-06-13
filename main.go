@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	sparta "github.com/mweagle/Sparta"
 )
@@ -33,10 +35,17 @@ func main() {
 		helloWorld,
 		nil)
 
+	userName := os.Getenv("USER")
+	if "" == userName {
+		userName = os.Getenv("USERNAME")
+	}
+	// Sanitize the name so that it doesn't have any spaces
+	canonicalName := strings.Replace(userName, " ", "", -1)
+	stackName := fmt.Sprintf("SpartaHelloWorld-%s", canonicalName)
 	var lambdaFunctions []*sparta.LambdaAWSInfo
 	lambdaFunctions = append(lambdaFunctions, lambdaFn)
-	err := sparta.Main("SpartaHelloWorld",
-		fmt.Sprintf("Test HelloWorld resource command"),
+	err := sparta.Main(stackName,
+		fmt.Sprintf("Sparta %s for %s", stackName, userName),
 		lambdaFunctions,
 		nil,
 		nil)
