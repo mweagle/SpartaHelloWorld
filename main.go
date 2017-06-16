@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"os"
 
-	"strings"
-
 	"github.com/Sirupsen/logrus"
 	sparta "github.com/mweagle/Sparta"
+	spartaCF "github.com/mweagle/Sparta/aws/cloudformation"
 )
 
 // Standard AWS λ function
@@ -24,7 +23,7 @@ func helloWorld(event *json.RawMessage,
 		"Discovery": configuration,
 	}).Info("Custom resource request")
 
-	fmt.Fprint(w, "Hello World")
+	fmt.Fprint(w, "Hello World 🌍")
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,17 +34,12 @@ func main() {
 		helloWorld,
 		nil)
 
-	userName := os.Getenv("USER")
-	if "" == userName {
-		userName = os.Getenv("USERNAME")
-	}
 	// Sanitize the name so that it doesn't have any spaces
-	canonicalName := strings.Replace(userName, " ", "", -1)
-	stackName := fmt.Sprintf("SpartaHelloWorld-%s", canonicalName)
+	stackName := spartaCF.UserScopedStackName("SpartaHelloWorld")
 	var lambdaFunctions []*sparta.LambdaAWSInfo
 	lambdaFunctions = append(lambdaFunctions, lambdaFn)
 	err := sparta.Main(stackName,
-		fmt.Sprintf("Sparta %s for %s", stackName, userName),
+		stackName,
 		lambdaFunctions,
 		nil,
 		nil)
