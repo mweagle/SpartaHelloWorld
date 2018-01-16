@@ -1,45 +1,60 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"net/http"
+	_ "net/http/pprof" // include pprop
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	sparta "github.com/mweagle/Sparta"
 	spartaCF "github.com/mweagle/Sparta/aws/cloudformation"
+	"github.com/sirupsen/logrus"
 )
 
+/*
+• func ()
+• func () error
+• func (TIn), error
+• func () (TOut, error)
+• func (context.Context) error
+• func (context.Context, TIn) error
+• func (context.Context) (TOut, error)
+• func (context.Context, TIn) (TOut, error)
+*/
+
 // Standard AWS λ function
-func helloWorld(event *json.RawMessage,
-	context *sparta.LambdaContext,
-	w http.ResponseWriter,
-	logger *logrus.Logger) {
-
-	configuration, _ := sparta.Discover()
-
-	logger.WithFields(logrus.Fields{
-		"Discovery": configuration,
-	}).Info("Custom resource request")
-
-	fmt.Fprint(w, "Hello World 🌍")
+func helloWorld(ctx context.Context) (string, error) {
+	logger, loggerOk := ctx.Value(sparta.ContextKeyLogger).(*logrus.Logger)
+	if loggerOk {
+		logger.Info("Access structured logger")
+	}
+	contextLogger, contextLoggerOk := ctx.Value(sparta.ContextKeyRequestLogger).(*logrus.Entry)
+	if contextLoggerOk {
+		contextLogger.Info("Request scoped log")
+	} else if loggerOk {
+		logger.Warn("Failed to access scoped logger")
+	} else {
+		fmt.Printf("Failed to access any logger")
+	}
+	return "Hello World 🌏", nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main
 func main() {
 
-	lambdaFn := sparta.NewLambda(sparta.IAMRoleDefinition{},
+	//chain := alice.New(tapHandler).Then(http.HandlerFunc(helloWorld))
+	lambdaFn := sparta.HandleAWSLambda("Hello World",
 		helloWorld,
-		nil)
+		sparta.IAMRoleDefinition{})
 
 	// Sanitize the name so that it doesn't have any spaces
-	stackName := spartaCF.UserScopedStackName("SpartaHelloWorld")
+	stackName := spartaCF.UserScopedStackName("MyHelloWorldStack")
 	var lambdaFunctions []*sparta.LambdaAWSInfo
 	lambdaFunctions = append(lambdaFunctions, lambdaFn)
+
 	err := sparta.Main(stackName,
-		stackName,
+		"Simple Sparta application that demonstrates core functionality",
 		lambdaFunctions,
 		nil,
 		nil)
