@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof" // include pprop
 	"os"
 
+	"github.com/aws/aws-sdk-go/aws/session"
 	sparta "github.com/mweagle/Sparta"
 	spartaCF "github.com/mweagle/Sparta/aws/cloudformation"
 	"github.com/sirupsen/logrus"
@@ -42,18 +43,22 @@ func helloWorld(ctx context.Context) (string, error) {
 ////////////////////////////////////////////////////////////////////////////////
 // Main
 func main() {
-
-	//chain := alice.New(tapHandler).Then(http.HandlerFunc(helloWorld))
 	lambdaFn := sparta.HandleAWSLambda("Hello World",
 		helloWorld,
 		sparta.IAMRoleDefinition{})
 
+	sess := session.Must(session.NewSession())
+	awsName, awsNameErr := spartaCF.UserAccountScopedStackName("MyHelloWorldStack",
+		sess)
+	if awsNameErr != nil {
+		fmt.Print("Failed to create stack name\n")
+		os.Exit(1)
+	}
 	// Sanitize the name so that it doesn't have any spaces
-	stackName := spartaCF.UserScopedStackName("MyHelloWorldStack")
 	var lambdaFunctions []*sparta.LambdaAWSInfo
 	lambdaFunctions = append(lambdaFunctions, lambdaFn)
 
-	err := sparta.Main(stackName,
+	err := sparta.Main(awsName,
 		"Simple Sparta application that demonstrates core functionality",
 		lambdaFunctions,
 		nil,
