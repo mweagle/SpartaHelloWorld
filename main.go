@@ -13,6 +13,8 @@ import (
 )
 
 /*
+Supported signatures
+
 • func ()
 • func () error
 • func (TIn), error
@@ -24,20 +26,21 @@ import (
 */
 
 // Standard AWS λ function
+
 func helloWorld(ctx context.Context) (string, error) {
 	logger, loggerOk := ctx.Value(sparta.ContextKeyLogger).(*logrus.Logger)
 	if loggerOk {
-		logger.Info("Access structured logger")
+		logger.Info("Accessing structured logger 🙌")
 	}
 	contextLogger, contextLoggerOk := ctx.Value(sparta.ContextKeyRequestLogger).(*logrus.Entry)
 	if contextLoggerOk {
-		contextLogger.Info("Request scoped log")
+		contextLogger.Info("Accessing request-scoped log, with request ID field")
 	} else if loggerOk {
 		logger.Warn("Failed to access scoped logger")
 	} else {
 		fmt.Printf("Failed to access any logger")
 	}
-	return "Hello World 🌏", nil
+	return "Hello World 👋. Welcome to AWS Lambda! 🙌🎉🍾", nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,6 +57,7 @@ func main() {
 		fmt.Print("Failed to create stack name\n")
 		os.Exit(1)
 	}
+
 	// Sanitize the name so that it doesn't have any spaces
 	var lambdaFunctions []*sparta.LambdaAWSInfo
 	lambdaFunctions = append(lambdaFunctions, lambdaFn)
